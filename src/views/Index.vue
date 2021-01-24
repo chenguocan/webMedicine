@@ -1,6 +1,5 @@
 <template>
   <div class="center-page">
-    123
     <div v-html="remoteStream"
          :class="remoteStream?'distant-stream':''">
     </div>
