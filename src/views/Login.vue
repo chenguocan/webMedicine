@@ -8,7 +8,7 @@
             <el-input  v-model="loginForm.username" placeholder="请输入用户"></el-input>
           </el-form-item>
           <el-form-item prop="password">
-            <el-input v-model="loginForm.password" placeholder="请输入密码" ></el-input>
+            <el-input type="password" v-model="loginForm.password" placeholder="请输入密码" ></el-input>
           </el-form-item>
         </el-form>
         <el-button type="primary" class="login-btn" @click="login">登录</el-button>
@@ -23,8 +23,8 @@ export default {
   data(){
     return{
       loginForm:{
-        username:'',
-        password:'',
+        username:'1001',
+        password:'1234',
       },
       loginRules:{
         username:[
@@ -41,9 +41,19 @@ export default {
   },
   methods:{
     login(){
+
       this.$refs.loginForm.validate((valid)=>{
         if(valid){
-          this.$router.push({path:'/i'});
+          let username=this.loginForm.username;
+          let password=this.loginForm.password
+          if(username==='1001' && password==='1234'){
+            this.$router.push({path:'/i'});
+          }else{
+            this.$message({
+              type:'error',
+              message:'账号或密码错误'
+            })
+          }
         }
       })
     }

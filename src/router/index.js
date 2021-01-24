@@ -3,6 +3,7 @@ import VueRouter from 'vue-router'
 import Index from '../views/Index.vue'
 import Login from "../views/Login.vue";
 import Layout from "@/views/Layout";
+import VideRoom from "@/views/VideRoom";
 Vue.use(VueRouter)
 
 const routes = [
@@ -19,6 +20,9 @@ const routes = [
       path:'/index',
       name:'main',
       component:Index
+    },{
+      path:'/liveroom',
+      component: VideRoom
     }]
   }
 ]
