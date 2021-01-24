@@ -1,11 +1,13 @@
 <template>
   <div class="center-page">
+    123
     <div v-html="remoteStream"
          :class="remoteStream?'distant-stream':''">
     </div>
     <div id='local_stream'
          class="local-stream">
     </div>
+    <el-button @click="exit">退出</el-button>
   </div>
 </template>
 
@@ -32,6 +34,13 @@ export default {
   },
 
   methods: {
+    exit(){
+      this.client.leave().then(()=>{
+        console.log('退房成功')
+      }).catch(error=>{
+        console.error('退房失败',error);
+      })
+    },
     //创建链接
     createClient (userId) {
       //获取签名
@@ -46,8 +55,8 @@ export default {
       });
       //注册远程监听，要放在加入房间前--这里用了发布订阅模式
       this.subscribeStream(this.client)
-      /*//初始化后才能加入房间
-      this.joinRoom(this.client, 1100);*/
+      //初始化后才能加入房间
+      this.joinRoom(this.client, 1100);
     },
     //加入房间
     joinRoom (client, roomId) {
