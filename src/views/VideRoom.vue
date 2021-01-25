@@ -1,17 +1,28 @@
 <template>
   <div class="center-page" >
-    <div class="liveroom">
-      <div id='local_stream'
-           class="local-stream" >
-      </div>
-      <div class="box">
-        <div  id="remoteStream"
-              class="distant-stream">
+    <el-card class="options">
+      <i class="iconfont icon-tuichu2" style="font-size: 32px;color: red;" @click="exit"></i>
+    </el-card>
+    <el-card>
+      <div class="liveroom">
+        <div>
+          <div class="name" style="text-align: center">
+            <i class="iconfont icon-shipin" @click="muteVideo"></i>
+            <i class="iconfont icon-yuyin" @click="muteAudio"></i>
+            我
+          </div>
+          <div id='local_stream'
+               class="local-stream" :style="{height:mainHeight,width:mainWidth}" @click="xxx">
+          </div>
+        </div>
+        <div class="box">
+          <div  id="remoteStream"
+                class="distant-stream">
+          </div>
         </div>
       </div>
-    </div>
-    <el-button @click="exit" type="success">退出</el-button>
-    <el-button @click="get">获取</el-button>
+    </el-card>
+
   </div>
 </template>
 
@@ -31,6 +42,11 @@ export default {
       remoteStream: '',//远方播放流
       localStream: '',//本地流
       userList:[],
+      mainWidth:'400px',
+      mainHeight:'400px',
+      isToggle:false,
+      isMuteAudio:false,
+      isMuteVideo:false,
     }
   },
   created() {
@@ -38,14 +54,41 @@ export default {
   },
   mounted () {
   },
-
+  destroyed() {
+    this.client.unpublish(this.localStream).then(() => {
+      // 取消发布本地流成功
+    });
+    this.leaveRoom(this.client);
+  },
   methods: {
-    xxx(){
-      let mainVideo=$('.local-stream').first();
-      if($('.local-stream').is(mainVideo)){
-        return;
+    muteAudio(){
+      if(this.isMuteAudio===true){
+        this.localStream.unmuteAudio();
+        this.isMuteAudio=false;
+      }else{
+        this.localStream.muteAudio();
+        this.isMuteAudio=true;
       }
-      mainVideo.css({width:'400px',height:'400px'});
+    },
+    muteVideo() {
+      if(this.isMuteVideo===true){
+        this.localStream.unmuteVideo();
+        this.isMuteAudio=false;
+      }else{
+        this.localStream.muteVideo();
+        this.isMuteAudio=true;
+      }
+    },
+    xxx(){
+      if(!this.isToggle){
+        this.mainHeight='200px';
+        this.mainWidth='200px';
+        this.isToggle=true;
+      }else{
+        this.mainHeight='400px';
+        this.mainWidth='400px';
+        this.isToggle=false;
+      }
     },
     changeView(a,b){
       let $div1=$(a);
@@ -61,28 +104,10 @@ export default {
       $temobj1.remove();
       $temobj2.remove();
     },
-    get(){
-      this.client.getRemoteVideoStats().then(stats => {
-        for (let userId in stats) {
-          console.log('userId: ' + userId +
-              ' bytesReceived: ' + stats[userId].bytesReceived +
-              ' packetsReceived: ' + stats[userId].packetsReceived +
-              ' packetsLost: ' + stats[userId].packetsLost +
-              ' framesDecoded: ' + stats[userId].framesDecoded +
-              ' frameWidth: ' + stats[userId].frameWidth +
-              ' frameHeight: ' + stats[userId].frameHeight);
-        }
-      });
-    },
     async exit(){
-      /*this.client.unpublish(this.localStream).then(()=>{
-        console.log('取消发布流成功');
-      })*/
-      await this.client.unpublish(this.localStream).then(() => {
-        // 取消发布本地流成功
-      });
-      this.leaveRoom(this.client);
-      this.$router.push('/i')
+      setTimeout(()=>{
+        this.$router.push('/diagnosis')
+      },0)
     },
     //创建链接
     createClient (userId) {
@@ -110,10 +135,9 @@ export default {
           .then(() => {
             console.log('进房成功');
             //创建本地流
-            this.createStream(this.userId)
+            this.createStream(this.userId);
             //播放远端流
             this.playStream(this.client)
-
           });
     },
 
@@ -121,6 +145,7 @@ export default {
     createStream (userId) {
       const localStream = TRTC.createStream({ userId, audio: true, video: true });
       this.localStream =localStream
+      //创建好后才能发布
       localStream
           .initialize()
           .catch(error => {
@@ -130,7 +155,6 @@ export default {
             console.log('初始化本地流成功');
             // 创建好后才能播放 本地流播放 local_stream 是div的id
             localStream.play('local_stream');
-            //创建好后才能发布
             this.publishStream(localStream, this.client)
           });
     },
@@ -167,29 +191,74 @@ export default {
         console.log('远端移除',event.stream);
         const remoteStream = event.stream;
         remoteStream.stop();
-        if(this.userList.length!==0){
-          let name=`${'remote_stream-' + remoteStream.getId()}`;
-          let dom=document.querySelector(`#${name}`);
-          if(dom){
-            dom.parentNode.removeChild(dom);
-          }
-          console.log(dom);
-          this.userList=[];
+        let name=`${'remote_stream-' + remoteStream.getId()}`;
+        let dom=document.querySelector(`#${name}`);
+        if(dom){
+          dom.parentNode.removeChild(dom);
         }
       })
       client.on('stream-subscribed', event => {
         const remoteStream = event.stream;
+        remoteStream.isAudioMute=false;
+        remoteStream.isVideoMute=false;
         console.log('远端流订阅成功：' + remoteStream.getId());
+        console.log(remoteStream);
+        let userId=remoteStream.userId_;
         // 创建远端流标签，因为id是动态的，所以动态创建，用了v-html
         if(this.userList.length!==0){
           let dom=document.createElement('div');
           dom.setAttribute('id',`${'remote_stream-' + remoteStream.getId()}`);
           dom.style.width='200px';
           dom.style.height='200px';
-          dom.onclick= ()=>{
-            this.changeView('.local-stream',`${'#remote_stream-' + remoteStream.getId()}`);
+          dom.style.marginLeft='20px';
+          dom.style.marginBottom='20px';
+          dom.onclick= (e)=>{
+            e.stopPropagation();
+            if(dom.style.width==='200px'){
+              dom.style.width='400px';
+              dom.style.height='400px';
+              this.$forceUpdate();
+            }else{
+              dom.style.width='200px';
+              dom.style.height='200px';
+            }
           }
-          /*this.remoteStream = `<view id="${'remote_stream-' + remoteStream.getId()}"  ></view>`;*/
+          let div=$('<div></div>');
+          let video=$('<i></i>');
+          let audio=$('<i></i>');
+          let p=$('<p></p>');
+          video.attr('class','iconfont icon-shipin');
+          audio.attr('class','iconfont icon-yuyin');
+          p.html(userId);
+          video.appendTo(div);
+          audio.appendTo(div);
+          p.appendTo(div);
+          div.css({'display': 'flex','justifyContent':'space-arround'});
+          div.appendTo(dom);
+          div.click(function (e){
+            e.stopPropagation();
+          })
+          video.click(function (e){
+            e.stopPropagation();
+            console.log('123');
+            if(remoteStream.isVideoMute===true){
+              remoteStream.unmuteVideo();
+              remoteStream.isVideoMute=false;
+            }else{
+              remoteStream.muteVideo();
+              remoteStream.isVideoMute=true;
+            }
+          })
+          audio.click(function (e){
+            e.stopPropagation();
+            if(remoteStream.isAudioMute===true){
+              remoteStream.unmuteAudio();
+              remoteStream.isAudioMute=false;
+            }else{
+              remoteStream.muteAudio();
+              remoteStream.isAudioMute=true;
+            }
+          })
           let remoteDiv=document.querySelector('#remoteStream');
           remoteDiv.appendChild(dom);
           //做了dom操作 需要使用$nextTick(),否则找不到创建的标签无法进行播放
@@ -209,18 +278,19 @@ export default {
     },
     //退出音视频
     leaveRoom (client) {
+      let that=this;
       client
           .leave()
           .then(() => {
             console.log('退房成功')
             // 停止本地流，关闭本地流内部的音视频播放器
-            this.localStream.stop();
+            that.localStream.stop();
             // 关闭本地流，释放摄像头和麦克风访问权限
-            this.localStream.close();
-            this.localStream = null;
-            this.userList=[];
-            this.remoteStream=null;
-            this.client = null
+            that.localStream.close();
+            that.localStream = null;
+            that.userList=[];
+            that.remoteStream=null;
+            that.client = null
             // 退房成功，可再次调用client.join重新进房开启新的通话。
           })
           .catch(error => {
@@ -278,6 +348,10 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.options{
+  display: flex;
+  justify-content: center;
+}
 .center-page{
   height: 100%;
   width: 100%;
@@ -293,7 +367,6 @@ export default {
 //远端流
 .box{
   display: flex;
-  margin-left: 20px;
 }
 .distant-stream {
   display: flex;

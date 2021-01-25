@@ -1,8 +1,7 @@
 <template>
   <div>
     <div>
-      <el-button @click="toOrder">预约通话</el-button>
-      <div id="chen"></div>
+      欢迎来到西太云医
     </div>
   </div>
 </template>
@@ -12,10 +11,6 @@
 export default {
   name: "Index",
   methods:{
-
-    toOrder(){
-      this.$router.push("/liveroom");
-    }
   }
 }
 </script>

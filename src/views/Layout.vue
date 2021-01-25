@@ -4,12 +4,20 @@
       <!--头部-->
       <el-header>
         <h1>西太云医</h1>
-        <div @click="xxx">退出</div>
+        <div @click="logout">退出</div>
       </el-header>
       <el-container>
         <!--侧边栏-->
         <el-aside style="width: 200px">
-
+          <el-menu
+              default-active="1"
+              class="el-menu-vertical-demo"
+              >
+            <el-menu-item v-for="(item,index) in menuList" :index="(index+1).toString()" :key="index" @click="toPage(index)">
+              <i :class="item.icon"></i>
+              <span slot="title">{{item.title}}</span>
+            </el-menu-item>
+          </el-menu>
         </el-aside>
         <!-- 主内容-->
         <el-main>
@@ -32,13 +40,27 @@ export default {
     return {
       navBar: '',
       breadList:[],
+      menuList:[{
+        title:'首页',
+        icon:'el-icon-menu'
+      },{
+        title:'视频诊疗',
+        icon:'el-icon-video-camera'
+      }]
     }
   },
   created() {
   },
 
   methods: {
-    xxx(){
+    toPage(index){
+      if(index===0){
+          this.$router.push('/index')
+      }else if(index===1){
+          this.$router.push('/diagnosis')
+      }
+    },
+    logout(){
       this.$router.push("/")
     }
   }

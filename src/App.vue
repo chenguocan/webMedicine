@@ -5,6 +5,7 @@
 </template>
 
 <style lang="scss">
+@import "./static/iconfont.css";
 #app{
   width: 100%;
   height: 100%;
