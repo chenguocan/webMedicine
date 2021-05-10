@@ -3,7 +3,7 @@
     <el-container>
       <!--头部-->
       <el-header>
-        <h1>焕然医疗医生端</h1>
+        <h1>西太云医</h1>
         <div @click="logout">退出</div>
       </el-header>
       <el-container>
