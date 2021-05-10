@@ -1,7 +1,7 @@
 <template>
   <div class="loginPage">
     <div class="login">
-      <h1> 登录系统</h1>
+      <h1> 焕然医疗医生端</h1>
       <div class="login-form">
         <el-form  ref="loginForm" :rules="loginRules" :model="loginForm">
           <el-form-item prop="username" >
@@ -23,8 +23,8 @@ export default {
   data(){
     return{
       loginForm:{
-        username:'1001',
-        password:'1234',
+        username:'',
+        password:'',
       },
       loginRules:{
         username:[

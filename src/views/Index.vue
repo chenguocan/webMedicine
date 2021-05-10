@@ -1,20 +1,37 @@
 <template>
-  <div>
-    <div>
-      欢迎来到西太云医
-    </div>
+  <div id="example">
+
   </div>
 </template>
 
 <script>
-
 export default {
-  name: "Index",
-  methods:{
-  }
-}
+  name: 'example',
+  data() {
+    return {
+      data: []
+    };
+  },
+  computed: {
+  },
+  methods: {
+  },
+};
 </script>
 
-<style scoped>
-
+<style  lang="less">
+* {
+  margin: 0;
+  padding: 0;
+}
+.switch-list {
+  margin: 20px 0;
+  list-style: none;
+  overflow: hidden;
+}
+.switch-item {
+  margin: 20px;
+  float: left;
+}
 </style>
+

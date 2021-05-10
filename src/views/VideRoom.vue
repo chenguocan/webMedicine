@@ -1,24 +1,34 @@
 <template>
   <div class="center-page" >
-    <el-card class="options">
-      <i class="iconfont icon-tuichu2" style="font-size: 32px;color: red;" @click="exit"></i>
+    <el-card >
+      <div class="options">
+        <div>通话时长{{time}}</div>
+        <div>
+          <i class="iconfont icon-tuichu2" style="font-size: 32px;color: red;" @click="exit"></i>
+        </div>
+        <div>
+          <el-button type="warning">病历卡</el-button>
+        </div>
+      </div>
     </el-card>
     <el-card>
       <div class="liveroom">
         <div>
-          <div class="name" style="text-align: center">
-            <i class="iconfont icon-shipin" @click="muteVideo"></i>
-            <i class="iconfont icon-yuyin" @click="muteAudio"></i>
-            我
-          </div>
-          <div id='local_stream'
-               class="local-stream" :style="{height:mainHeight,width:mainWidth}" @click="xxx">
-          </div>
+          <el-card>
+            <div class="name" style="text-align: center">
+              <i class="iconfont icon-shipin" @click="muteVideo"></i>
+              <i class="iconfont icon-yuyin" @click="muteAudio"></i>
+              我
+            </div>
+            <div id='local_stream'
+                 class="local-stream" :style="{height:mainHeight,width:mainWidth}" @click="xxx">
+            </div>
+          </el-card>
         </div>
         <div class="box">
-          <div  id="remoteStream"
-                class="distant-stream">
-          </div>
+            <div  id="remoteStream"
+                  class="distant-stream">
+            </div>
         </div>
       </div>
     </el-card>
@@ -37,20 +47,29 @@ export default {
   data () {
     return {
       userId: 'user_' + parseInt(Math.random() * 100000000),//用户id --可更改
-      roomId: 888888,//房间号--加入相同房间才能聊
+      roomId: '',//房间号--加入相同房间才能聊
       client: '',//客户端服务
       remoteStream: '',//远方播放流
       localStream: '',//本地流
       userList:[],
-      mainWidth:'400px',
-      mainHeight:'400px',
+      mainWidth:'448px',
+      mainHeight:'448px',
       isToggle:false,
       isMuteAudio:false,
       isMuteVideo:false,
+      time:0,
+      timeId:'',
+      id:'',
+      login:'123123123'
     }
   },
   created() {
+    console.log(this.$route.query);
+    this.id=this.$route.query.id;
+    this.roomId=parseInt(this.$route.query.room);
+    this.checked();
     this.createClient(this.userId);
+    this.startVideoServer();
   },
   mounted () {
   },
@@ -61,6 +80,13 @@ export default {
     this.leaveRoom(this.client);
   },
   methods: {
+    checked(){
+      TRTC.checkSystemRequirements().then((result) => {
+        if(!result) {
+          return this.$message.error('当前浏览器不支持TRTC服务');
+        }
+      });
+    },
     muteAudio(){
       if(this.isMuteAudio===true){
         this.localStream.unmuteAudio();
@@ -73,10 +99,10 @@ export default {
     muteVideo() {
       if(this.isMuteVideo===true){
         this.localStream.unmuteVideo();
-        this.isMuteAudio=false;
+        this.isMuteVideo=false;
       }else{
         this.localStream.muteVideo();
-        this.isMuteAudio=true;
+        this.isMuteVideo=true;
       }
     },
     xxx(){
@@ -85,26 +111,13 @@ export default {
         this.mainWidth='200px';
         this.isToggle=true;
       }else{
-        this.mainHeight='400px';
-        this.mainWidth='400px';
+        this.mainHeight='448px';
+        this.mainWidth='448px';
         this.isToggle=false;
       }
     },
-    changeView(a,b){
-      let $div1=$(a);
-      let $div3=$(b);
-      $div1.css({height:'200px',width:'200px',marginLeft:'20px'});
-      $div3.css({height:'400px',width:'400px'});
-      let $temobj1=$('<div></div>');
-      let $temobj2=$('<div></div>');
-      $temobj1.insertBefore($div1);
-      $temobj2.insertBefore($div3);
-      $div1.insertAfter($temobj2);
-      $div3.insertAfter($temobj2);
-      $temobj1.remove();
-      $temobj2.remove();
-    },
     async exit(){
+      await this.stopVideoServer();
       setTimeout(()=>{
         this.$router.push('/diagnosis')
       },0)
@@ -124,7 +137,7 @@ export default {
       //注册远程监听，要放在加入房间前--这里用了发布订阅模式
       this.subscribeStream(this.client)
       //初始化后才能加入房间
-      this.joinRoom(this.client, 1100);
+      this.joinRoom(this.client, this.roomId);
     },
     //加入房间
     joinRoom (client, roomId) {
@@ -156,9 +169,23 @@ export default {
             // 创建好后才能播放 本地流播放 local_stream 是div的id
             localStream.play('local_stream');
             this.publishStream(localStream, this.client)
+
           });
     },
-
+    async startVideoServer(){
+        let res=await this.$request.post('/doctor/startVideoServer',{
+          id:this.id,
+          login:this.login
+        })
+        console.log(res)
+    },
+    async stopVideoServer(){
+      let res=await this.$request.post('/doctor/stopVideoServer',{
+        id:this.id,
+        login:this.login
+      })
+      console.log(res)
+    },
     //发布本地音视频流
     publishStream (localStream, client) {
       client
@@ -178,6 +205,11 @@ export default {
         console.log('远端流增加: ' + remoteStream.getId());
         //订阅远端流
         client.subscribe(remoteStream);
+        if(this.time===0){
+          this.timeId=setInterval(()=>{
+            this.time++;
+          },1000);
+        }
       });
     },
 
@@ -185,6 +217,7 @@ export default {
     playStream (client) {
       client.on('peer-join',event=>{
         const userId=event.userId;
+        console.log('加入了');
         this.userList.push(userId);
       })
       client.on('stream-removed',event=>{
@@ -196,6 +229,7 @@ export default {
         if(dom){
           dom.parentNode.removeChild(dom);
         }
+
       })
       client.on('stream-subscribed', event => {
         const remoteStream = event.stream;
@@ -215,8 +249,8 @@ export default {
           dom.onclick= (e)=>{
             e.stopPropagation();
             if(dom.style.width==='200px'){
-              dom.style.width='400px';
-              dom.style.height='400px';
+              dom.style.width='336px';
+              dom.style.height='448px';
               this.$forceUpdate();
             }else{
               dom.style.width='200px';
@@ -233,14 +267,13 @@ export default {
           video.appendTo(div);
           audio.appendTo(div);
           p.appendTo(div);
-          div.css({'display': 'flex','justifyContent':'space-arround'});
+          div.css({'display': 'flex','justifyContent':'center'});
           div.appendTo(dom);
           div.click(function (e){
             e.stopPropagation();
           })
           video.click(function (e){
             e.stopPropagation();
-            console.log('123');
             if(remoteStream.isVideoMute===true){
               remoteStream.unmuteVideo();
               remoteStream.isVideoMute=false;
@@ -267,6 +300,10 @@ export default {
             remoteStream.play('remote_stream-' + remoteStream.getId());
           })
         }
+      });
+      client.on('mute-audio', event => {
+        const userId = event.userId;
+        console.log(userId);
       });
     },
 
@@ -350,7 +387,8 @@ export default {
 <style lang="scss" scoped>
 .options{
   display: flex;
-  justify-content: center;
+  align-items: center;
+  justify-content: space-between;
 }
 .center-page{
   height: 100%;
@@ -358,11 +396,6 @@ export default {
 }
 .liveroom{
   display: flex;
-}
-//本地流
-.local-stream {
-  width: 400px;
-  height: 400px;
 }
 //远端流
 .box{
