@@ -82,6 +82,18 @@ export default {
       room:'',
       tableData:[],
       intervalId:'',
+      showTrue:false,
+    }
+  },
+  watch:{
+    $route(to){
+      console.log(to);
+      if(to.path==='/liveroom'){
+        this.showTrue=true;
+      }else{
+        this.showTrue=false;
+      }
+      localStorage.setItem('route',to.path);
     }
   },
   created() {
@@ -130,7 +142,9 @@ export default {
       if(res.data.errCode===0){
         if(res.data.data.length!==0){
           this.tableData=res.data.data;
-          this.noticeVisible=true;
+          if(!this.showTrue){
+            this.noticeVisible=true;
+          }
         }
       }
     },
